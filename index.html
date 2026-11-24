@@ -33,7 +33,7 @@
   <label for="hook">Adresse du webhook (onglet « Production URL » dans n8n)</label>
   <input id="hook" value="https://maxims-autoagents.app.n8n.cloud/webhook/papi-7f3a9c2e41b8d605a1e4c3f2" autocomplete="off" spellcheck="false">
   <label for="mdp">Mot de passe (le même que <code>acces_token</code> dans n8n)</label>
-  <input id="mdp" type="password" autocomplete="off" spellcheck="false" placeholder="40 caractères ou plus, lettres et chiffres">
+  <input id="mdp" type="password" autocomplete="off" spellcheck="false" placeholder="32 caractères ou plus, lettres et chiffres">
   <button id="voir" class="gris" type="button">Afficher / masquer</button>
   <button id="fabriquer" type="button">Fabriquer le lien</button>
   <div id="err" class="erreur" role="alert"></div>
@@ -2357,7 +2357,9 @@ $("fabriquer").onclick = () => {
   const err = $("err"); err.textContent = ""; $("sortie").style.display = "none";
   if (!/^https:\/\/[^\s"'<>#]+$/.test(page)) { err.textContent = "L'adresse de la page doit commencer par https:// et ne pas contenir de « # »."; return; }
   if (!/^https:\/\/[^\s"'<>#&]+\/webhook\/[^\s"'<>#&]+$/.test(hook)) { err.textContent = "L'adresse du webhook doit être l'adresse de PRODUCTION (elle contient /webhook/, pas /webhook-test/)."; return; }
-  if (!/^[A-Za-z0-9]{32,}$/.test(mdp)) { err.textContent = "Le mot de passe doit faire au moins 32 caractères, avec uniquement des lettres et des chiffres (pas d'espace, pas de symbole). Il en reste " + Math.max(0, 32 - mdp.length) + " à ajouter."; return; }
+  if (mdp.length < 32) { err.textContent = "Le mot de passe fait " + mdp.length + " caractères : il en faut au moins 32 (il en manque " + (32 - mdp.length) + ")."; return; }
+  const mauvais = [...new Set(mdp.replace(/[A-Za-z0-9_.~-]/g, "").split(""))];
+  if (mauvais.length) { err.textContent = "Le mot de passe contient des caractères qui cassent le lien : " + mauvais.map(c => c === " " ? "(espace)" : "« " + c + " »").join(" ") + ". Garde seulement des lettres et des chiffres (le tiret, le tiret bas et le point passent aussi). Change-le dans n8n (acces_token), republie, puis recommence."; return; }
   const lien = page + "#k=" + mdp + "&u=" + hook;
   $("lien").textContent = lien;
   const qr = qrcode(0, "M"); qr.addData(lien); qr.make();
